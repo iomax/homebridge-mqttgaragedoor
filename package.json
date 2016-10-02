@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-mqttswitch",
-  "version": "0.0.2",
-  "description": "Homebridge plugin for MQTT switches",
+  "name": "homebridge-mqttgaragedoor",
+  "version": "0.0.0",
+  "description": "Homebridge plugin for MQTT Garage Door Opener",
   "note": "peerDependencies is hardcoded to peerDepdendencies in homebridge!!!",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ilcato/homebridge-mqttswitch"
+    "url": "https://github.com/iomax/homebridge-mqttgaragedoor"
   },
   "keywords": [
     "homebridge-plugin",
@@ -22,15 +22,15 @@
     "homekit",
     "Siri",
     "IoT",
-    "Switch"
+    "Garage"
   ],
   "dependencies": {
     "mqtt": "^1.6.3"
   },
-  "author": "ilcato",
+  "author": "iomax",
   "license": "GPL2",
   "bugs": {
-    "url": "https://github.com/ilcato/homebridge-mqttswitch/issues"
+    "url": "https://github.com/iomax/homebridge-mqttgaragedoor/issues"
   },
-  "homepage": "https://github.com/ilcato/homebridge-mqttswitch"
+  "homepage": "https://github.com/iomax/homebridge-mqttgaragedoor"
 }
