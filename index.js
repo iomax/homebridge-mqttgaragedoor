@@ -60,7 +60,7 @@ function MqttGarageDoorAccessory(log, config) {
 	
 	this.garageDoorOpener = new Service.GarageDoorOpener(this.name);
 
-	this.currentDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.DoorState);
+	this.currentDoorState = this.garageDoorOpener.getCharacteristic(DoorState);
     	this.currentDoorState.on('get', this.getState.bind(this));
 	this.targetDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.TargetDoorState);
     	this.targetDoorState.on('set', this.setState.bind(this));
@@ -88,7 +88,7 @@ function MqttGarageDoorAccessory(log, config) {
 		if (topic == that.topicStatusGet) {
 			var status = message.toString();
 			that.switchStatus = (status == "true" ? true : false);
-		   	that.service.getCharacteristic(Characteristic.DoorState).setValue(that.switchStatus, undefined, 'fromSetValue');
+//            		that.currentDoorState.setValue((that.isClosed() ? DoorState.CLOSED : DoorState.OPEN), undefined, 'fromSetValue');
 		}
 	});
     	
@@ -132,11 +132,11 @@ MqttGarageDoorAccessory.prototype = {
 
 	setState: function(status, callback, context) {
 		if(context !== 'fromSetValue') {
-    			this.log("Setting state to " + status);
+    			this.log("Setting state to " + (status == DoorState.OPEN ? "OPEN" : "CLOSED") );
     			this.targetState = status;
     			var isClosed = this.isClosed();
     			if ((status == DoorState.OPEN && isClosed) || (status == DoorState.CLOSED && !isClosed)) {
-        			this.log("Triggering GarageDoor Relay");
+        			this.log("Triggering GarageDoor Command");
         			this.operating = true; 
         			if (status == DoorState.OPEN) {
             				this.currentDoorState.setValue(DoorState.OPENING);
@@ -145,14 +145,15 @@ MqttGarageDoorAccessory.prototype = {
         			}
 	    			// this.switchStatus = status;
 				setTimeout(this.setFinalDoorState.bind(this), this.doorOpensInSeconds * 1000);
-	    			this.client.publish(this.topicStatusSet, status ? "true" : "false");
+	    			this.client.publish(this.topicStatusSet, status == DoorState.OPEN ? "true" : "false");
 			}
 		} 
 		callback();
 	},
 
 	isClosed: function() {
-		return(this.switchStatus);
+//		return( (this.switchStatus ? DoorState.OPEN : DoorState.CLOSED) );
+		return(!this.switchStatus);
  	},
 
 	setFinalDoorState: function() {
@@ -171,8 +172,9 @@ MqttGarageDoorAccessory.prototype = {
     		callback(null, this.targetState);
   	},
 
-	getServices = function() {
-  		return [this.service];
+	getServices:  function() {
+//  		return [this.service];
+		return [this.infoService, this.garageDoorOpener];
 	},
 
 };
