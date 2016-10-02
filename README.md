@@ -21,3 +21,9 @@ Remember to configure the plugin in config.json in your home directory inside th
  	"statusSet": 	"PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
 	}
 
+# Credit
+
+The original homebridge MQTT plugins work was done by [ilcato](https://github.com/ilcato) in his [homebridge-mqttswitch](https://github.com/ilcato/homebridge-mqttswitch) project.
+
+
+
