@@ -88,7 +88,7 @@ function MqttGarageDoorAccessory(log, config) {
 		if (topic == that.topicStatusGet) {
 			var status = message.toString();
 			that.switchStatus = (status == "true" ? true : false);
-//            		that.currentDoorState.setValue((that.isClosed() ? DoorState.CLOSED : DoorState.OPEN), undefined, 'fromSetValue');
+            		that.currentDoorState.setValue((that.isClosed() ? DoorState.CLOSED : DoorState.OPEN), undefined, 'fromSetValue');
 		}
 	});
     	
@@ -132,9 +132,9 @@ MqttGarageDoorAccessory.prototype = {
 
 	setState: function(status, callback, context) {
 		if(context !== 'fromSetValue') {
-    			this.log("Setting state to " + (status == DoorState.OPEN ? "OPEN" : "CLOSED") );
     			this.targetState = status;
     			var isClosed = this.isClosed();
+    			this.log("Setting state to " + (status == DoorState.OPEN ? "OPEN" : "CLOSED") +" - it was " + (isClosed ? "CLOSED" : "OPEN") );
     			if ((status == DoorState.OPEN && isClosed) || (status == DoorState.CLOSED && !isClosed)) {
         			this.log("Triggering GarageDoor Command");
         			this.operating = true; 
@@ -145,9 +145,10 @@ MqttGarageDoorAccessory.prototype = {
         			}
 	    			// this.switchStatus = status;
 				setTimeout(this.setFinalDoorState.bind(this), this.doorOpensInSeconds * 1000);
-	    			this.client.publish(this.topicStatusSet, status == DoorState.OPEN ? "true" : "false");
+	    			this.client.publish(this.topicStatusSet, "true");
+				setTimeout(this.pushOff.bind(this), 500);
 			}
-		} 
+		}
 		callback();
 	},
 
@@ -156,11 +157,15 @@ MqttGarageDoorAccessory.prototype = {
 		return(!this.switchStatus);
  	},
 
+	pushOff: function() {
+ 		this.client.publish(this.topicStatusSet, "false");
+	},
+
 	setFinalDoorState: function() {
     		var isClosed = this.isClosed();
     		if ((this.targetState == DoorState.CLOSED && !isClosed) || (this.targetState == DoorState.OPEN && isClosed)) {
       			this.log("Was trying to " + (this.targetState == DoorState.CLOSED ? " CLOSE " : " OPEN ") + "the door, but it is still " + (isClosed ? "CLOSED":"OPEN"));
-      			this.currentDoorState.setValue(DoorState.STOPPED);
+//      			this.currentDoorState.setValue(DoorState.STOPPED);
       			this.targetDoorState.setValue(isClosed ? DoorState.CLOSED : DoorState.OPEN);
     		} else {
       			this.currentDoorState.setValue(this.targetState);
