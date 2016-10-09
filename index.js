@@ -13,7 +13,10 @@
 // 			  "topics": {
 // 				"statusGet": 	"PUT THE MQTT TOPIC FOR THE GETTING THE STATUS OF YOUR SWITCH HERE",
 // 				"statusSet": 	"PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
-// 			  }
+// 			  },
+//                        "doorPollInMs": 4000,
+//                        "doorRunInSeconds": 20,
+//                        "doorFeedBack" : "PUT TYPE OF DOOR FEEDBACK [ OPEN | CLOSED | BOTH | NONE ]"
 //     }
 // ],
 //
@@ -53,8 +56,9 @@ function MqttGarageDoorAccessory(log, config) {
 	this.topicStatusGet	= config["topics"].statusGet;
 	this.topicStatusSet	= config["topics"].statusSet;
 
-	this.doorPollInMs = 4000;
-	this.doorOpensInSeconds = 20;
+	this.doorPollInMs = config["doorPollInMs"];
+	this.doorRunInSeconds = config["doorRunInSeconds"]; 
+	this.doorFeedBack = config["doorFeedBack"]; 
 
 	this.switchStatus = false;
 	
@@ -74,7 +78,7 @@ function MqttGarageDoorAccessory(log, config) {
     	this.infoService
       	   .setCharacteristic(Characteristic.Manufacturer, "Opensource Community")
            .setCharacteristic(Characteristic.Model, "MQTT GarageDoor")
-           .setCharacteristic(Characteristic.SerialNumber, "Version 0.0.0");
+           .setCharacteristic(Characteristic.SerialNumber, "Version 1.0.0");
   
 
 	// connect to MQTT broker
@@ -88,6 +92,16 @@ function MqttGarageDoorAccessory(log, config) {
 		if (topic == that.topicStatusGet) {
 			var status = message.toString();
 			that.switchStatus = (status == "true" ? true : false);
+			var isClosed = that.isClosed();
+			that.log("Getting state " + (isClosed ?  "CLOSED" : "OPEN") +" - it was " + (that.wasClosed ? "CLOSED" : "OPEN") );
+    			if ( (that.wasClosed && !isClosed) || (!that.wasClosed && isClosed) ) {
+				var state = isClosed ? DoorState.CLOSED : DoorState.OPEN;
+	                       	that.operating = true;
+                               	that.currentDoorState.setValue( (isClosed ? DoorState.CLOSING : DoorState.OPENING ), undefined, 'fromGetValue');
+                        	that.targetDoorState.setValue(state);
+                        	that.targetState = state;
+				that.setFeedbackTimeout('fromGetValue');
+			}
 			that.monitorDoorState();
 		}
 	});
@@ -131,20 +145,20 @@ MqttGarageDoorAccessory.prototype = {
 	},
 
 	setState: function(status, callback, context) {
-		if(context !== 'fromSetValue') {
+		if(context !== 'fromGetValue') {
     			this.targetState = status;
-    			var isClosed = this.isClosed();
+	    		var isClosed = this.isClosed() ;
     			this.log("Setting state to " + (status == DoorState.OPEN ? "OPEN" : "CLOSED") +" - it was " + (isClosed ? "CLOSED" : "OPEN") );
     			if ((status == DoorState.OPEN && isClosed) || (status == DoorState.CLOSED && !isClosed)) {
-        			this.log("Triggering GarageDoor Command");
         			this.operating = true; 
         			if (status == DoorState.OPEN) {
             				this.currentDoorState.setValue(DoorState.OPENING);
         			} else {
             				this.currentDoorState.setValue(DoorState.CLOSING);
         			}
-				setTimeout(this.setFinalDoorState.bind(this), this.doorOpensInSeconds * 1000);
-	    			this.client.publish(this.topicStatusSet, "true");
+				this.setFeedbackTimeout();
+	        		this.log("Triggering GarageDoor Command");
+				this.client.publish(this.topicStatusSet, "true");
 				setTimeout(this.pushOff.bind(this), 500);
 			}
 		}
@@ -159,16 +173,42 @@ MqttGarageDoorAccessory.prototype = {
  		this.client.publish(this.topicStatusSet, "false");
 	},
 
+	setFeedbackTimeout: function(context ) {
+		switch( this.doorFeedBack) {
+		case 'CLOSED':
+			if ( this.targetState == DoorState.CLOSED ) {
+				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );
+			} else {
+				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000 );
+			};
+			break;
+		case 'OPEN': 
+			if ( this.targetState == DoorState.OPEN ) {
+				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
+			} else {
+				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
+			};
+			break;
+		case 'BOTH': 
+			setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
+			break;
+		default: 
+			setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
+		}
+	},
+			
 	setFinalDoorState: function() {
-    		var isClosed = this.isClosed();
-    		if ((this.targetState == DoorState.CLOSED && !isClosed) || (this.targetState == DoorState.OPEN && isClosed)) {
-      			this.log("Was trying to " + (this.targetState == DoorState.CLOSED ? " CLOSE " : " OPEN ") + "the door, but it is still " + (isClosed ? "CLOSED":"OPEN"));
-//      			this.currentDoorState.setValue(DoorState.STOPPED);
-      			this.currentDoorState.setValue(isClosed ? DoorState.CLOSED : DoorState.OPEN);
-      			this.targetDoorState.setValue(isClosed ? DoorState.CLOSED : DoorState.OPEN);
-    		} else {
-      			this.currentDoorState.setValue(this.targetState);
-    		}
+		if( this.operating ) {
+    			var isClosed = this.isClosed();
+    			if ((this.targetState == DoorState.CLOSED && !isClosed) || (this.targetState == DoorState.OPEN && isClosed)) {
+      				this.log("Was trying to " + (this.targetState == DoorState.CLOSED ? " CLOSE " : " OPEN ") + "the door, but it is still " + (isClosed ? "CLOSED":"OPEN"));
+//	      			this.currentDoorState.setValue(DoorState.STOPPED);
+      				this.currentDoorState.setValue(isClosed ? DoorState.CLOSED : DoorState.OPEN);
+      				this.targetDoorState.setValue(isClosed ? DoorState.CLOSED : DoorState.OPEN);
+    			} else {
+      				this.currentDoorState.setValue(this.targetState);
+    			}
+		}
     		this.operating = false;
   	},
 

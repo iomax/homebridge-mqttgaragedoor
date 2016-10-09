@@ -12,7 +12,7 @@
     ],
     "accessories": [
     	{
-        	"accessory": "mqttswitch",
+            "accessory": "mqttgarage",
             "name": "PUT THE NAME OF YOUR SWITCH HERE",
             "url": "PUT URL OF THE BROKER HERE",
 			"username": "PUT USERNAME OF THE BROKER HERE",
@@ -21,7 +21,10 @@
  			"topics": {
  				"statusGet": 	"PUT THE MQTT TOPIC FOR THE GETTING THE STATUS OF YOUR SWITCH HERE",
  				"statusSet": 	"PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
- 			}
+			},
+			"doorPollInMs": 4000,
+        		"doorRunInSeconds": 20,
+			"doorFeedBack" : "PUT TYPE OF DOOR FEEDBACK [ OPENED | CLOSED | BOTH | NONE ]"
     	}
     ]
 }
