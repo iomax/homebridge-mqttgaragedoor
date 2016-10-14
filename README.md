@@ -5,7 +5,7 @@ An homebridge plugin that create an HomeKit Garage Door Opener accessory mapped 
 Follow the instruction in [homebridge](https://www.npmjs.com/package/homebridge) for the homebridge server installation.
     
 # Release notes
-Version 0.0.0
+Version 1.0.0
 + Initial draft
 
 # Configuration
@@ -17,10 +17,13 @@ Remember to configure the plugin in config.json in your home directory inside th
 + "password": "PUT PASSWORD OF THE BROKER HERE",
 + "caption": "PUT THE LABEL OF YOUR SWITCH HERE",
 + "topics": {
- 	"statusGet": 	"PUT THE MQTT TOPIC FOR THE GETTING THE STATUS OF YOUR SWITCH HERE",
- 	"statusSet": 	"PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
-	}
-
++ 	"statusGet": 	"PUT THE MQTT TOPIC FOR THE GETTING THE STATUS OF YOUR SWITCH HERE",
++ 	"statusSet": 	"PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
++	}
++ "doorPollInMs": POLLING TIME (mSec),
++ "doorRunInSeconds": DOOR [OPEN|CLOSURE] RUN TIME (Sec),
++ "doorFeedBack" : "PUT TYPE OF DOOR FEEDBACK [ OPENED | CLOSED | BOTH | NONE ]"
++
 # Credit
 
 The original homebridge MQTT plugins work was done by [ilcato](https://github.com/ilcato) in his [homebridge-mqttswitch](https://github.com/ilcato/homebridge-mqttswitch) project.
