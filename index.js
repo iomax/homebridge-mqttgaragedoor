@@ -158,12 +158,7 @@ MqttGarageDoorAccessory.prototype = {
         			}
 				this.setFeedbackTimeout();
 	        		this.log("Triggering GarageDoor Command");
-<<<<<<< HEAD
 				this.client.publish(this.topicStatusSet, "on");
-=======
-				this.client.publish(this.topicStatusSet, "push");
-//				setTimeout(this.pushOff.bind(this), 500);
->>>>>>> 8d2036b0ed0119ff285b0d9a2c2939a0d568ec0a
 			}
 		}
 		callback();
