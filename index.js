@@ -169,28 +169,35 @@ MqttGarageDoorAccessory.prototype = {
  	},
 
 	setFeedbackTimeout: function(context ) {
-		switch( this.doorFeedBack) {
-		case 'CLOSED':
-			if ( this.targetState == DoorState.CLOSED ) {
-				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );
-			} else {
-				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000 );
-			};
-			break;
-		case 'OPEN': 
-			if ( this.targetState == DoorState.OPEN ) {
-				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
-			} else {
-				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
-			};
-			break;
-		case 'BOTH': 
-			setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
-			break;
-		default: 
+		if( (context == 'fromGetValue') && ( (this.doorFeeBack == "BOTH") || (this.doorFeedBack == ( this.targetState == DoorState.CLOSED ? "CLOSED" : "OPEN" ))) {
+			this.setFinalDoorState.bind(this);
+		} else {
 			setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
 		}
 	},
+
+//		switch( this.doorFeedBack) {
+//		case 'CLOSED':
+//			if ( this.targetState == DoorState.CLOSED ) {
+//				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );
+//			} else {
+//				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000 );
+//			};
+//			break;
+//		case 'OPEN': 
+//			if ( this.targetState == DoorState.OPEN ) {
+//				setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
+//			} else {
+//				setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
+//			};
+//			break;
+//		case 'BOTH': 
+//			setTimeout(this.setFinalDoorState.bind(this), ( context == 'fromGetValue' ? 1 : this.doorRunInSeconds ) * 1000 );	
+//			break;
+//		default: 
+//			setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
+//		}
+//	},
 			
 	setFinalDoorState: function() {
 		if( this.operating ) {
