@@ -13,18 +13,20 @@ Remember to configure the plugin in config.json in your home directory inside th
 ```javascript
 {
   "accessory": "mqttgaragedoor",
-  "name": "PUT THE NAME OF YOUR SWITCH HERE",
-  "url": "PUT URL OF THE BROKER HERE",
-  "username": "PUT USERNAME OF THE BROKER HERE",
-  "password": "PUT PASSWORD OF THE BROKER HERE",
-  "caption": "PUT THE LABEL OF YOUR SWITCH HERE",
+  "name": "SWITCH NAME",
+  "url": "URL OF THE BROKER",
+  "username": "USERNAME OF THE BROKER",
+  "password": "PASSWORD OF THE BROKER",
+  "caption": "SWITCH LABEL",
   "topics": {
-              "statusGet": "PUT THE MQTT TOPIC FOR THE GETTING THE STATUS OF YOUR SWITCH HERE",
-              "statusSet": "PUT THE MQTT TOPIC FOR THE SETTING THE STATUS OF YOUR SWITCH HERE"
+		"statusSet":    "MQTT TOPIC FOR THE SETTING THE STATUS"
+		"openGet":      "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF OPEN SWITCH",
+		"closedGet":    "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF CLOSED SWITCH",
+		"openValue":    "OPTIONAL VALUE THAT MEANS OPEN (DEFAULT true)"
+		"closedValue":  "OPTIONAL VALUE THAT MEANS CLOSED (DEFAULT true)"
             }
-  "doorPollInMs": POLLING TIME (mSec),
-  "doorRunInSeconds": DOOR [OPEN|CLOSURE] RUN TIME (Sec),
-  "doorFeedBack" : "PUT TYPE OF DOOR FEEDBACK [ OPENED | CLOSED | BOTH | NONE ]"
+  "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS",
+  "pauseInSeconds" : "IF DEFINED : AUTO CLOSE AFTER [Seconds]"
 }
 ```
 

@@ -53,6 +53,7 @@ function MqttGarageDoorAccessory(log, config) {
 		password: config["password"],
     		rejectUnauthorized: false
 	};
+
 	this.caption		= config["caption"];
 	this.topicOpenGet	= ( config["topics"].openGet !== undefined ) ? config["topics"].openGet : "";
 	this.topicClosedGet	= ( config["topics"].closedGet !== undefined ) ? config["topics"].closedGet : "";
@@ -65,12 +66,12 @@ function MqttGarageDoorAccessory(log, config) {
 
 	this.garageDoorOpener = new Service.GarageDoorOpener(this.name);
 
-//	this.currentDoorState = this.garageDoorOpener.getCharacteristic(DoorState);
 	this.currentDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.CurrentDoorState);
     	this.currentDoorState.on('get', this.getState.bind(this));
 	this.targetDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.TargetDoorState);
     	this.targetDoorState.on('set', this.setState.bind(this));
     	this.targetDoorState.on('get', this.getTargetState.bind(this));
+
 
     	this.infoService = new Service.AccessoryInformation();
     	this.infoService
@@ -88,6 +89,7 @@ function MqttGarageDoorAccessory(log, config) {
 
 	this.client.on('message', function (topic, message) {
 		var status = message.toString();
+		
 		if (topic == that.topicClosedGet) {
 			var topicGotStatus = (status == that.ClosedValue);
 			that.Closed = topicGotStatus;
@@ -95,42 +97,27 @@ function MqttGarageDoorAccessory(log, config) {
 			var topicGotStatus = (status == that.OpenValue);
 			that.Open = topicGotStatus;
 		};
-		that.showLog("Getting state");
+		var NewDoorState = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSED : DoorState.OPEN );
+		var NewDoorStateRun = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSING : DoorState.OPENING );
 
-                if  (topic == that.topicClosedGet ) {
-                        if ( topicGotStatus ) {
-                               	that.targetDoorState.setValue(DoorState.CLOSED, undefined, 'fromGetValue');
-                               	that.currentDoorState.setValue(DoorState.CLOSED)
-				that.targetState = DoorState.CLOSED;
-				if ( that.TimeOut !== undefined ) {
-					clearTimeout( that.TimeOut )
-					that.operating = false;
-				};
-			} else if ( ! that.operating) {
-		                that.operating = true;
-                              	that.targetDoorState.setValue(DoorState.OPEN, undefined, 'fromGetValue');
-                               	that.currentDoorState.setValue(DoorState.OPENING );
-				that.targetState = DoorState.OPEN;
-				that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
+//		that.showLog("Getting state");
+
+                if ( topicGotStatus ) {
+	               	that.targetDoorState.setValue(NewDoorState, undefined, 'fromGetValue');
+        	       	that.currentDoorState.setValue(NewDoorState)
+			that.targetState = NewDoorState;
+			if ( that.TimeOut !== undefined ) {
+				clearTimeout( that.TimeOut )
+				that.operating = false;
 			};
-		} else if (topic == that.topicOpenGet ) {
-                        if ( topicGotStatus ) {
-                               	that.targetDoorState.setValue(DoorState.OPEN, undefined, 'fromGetValue');
-                               	that.currentDoorState.setValue(DoorState.OPEN);
-				that.targetState = DoorState.OPEN;
-				if ( that.TimeOut !== undefined ) {
-					clearTimeout( that.TimeOut )
-					that.operating = false;
-				};
-			} else if ( ! that.operating ) {
-		                that.operating = true;
-                               	that.targetDoorState.setValue(DoorState.CLOSED, undefined, 'fromGetValue');
-                               	that.currentDoorState.setValue(DoorState.CLOSING);
-				that.targetState = DoorState.CLOSED;
-				that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
-                        }; 
+		} else if ( ! that.operating) {
+	                that.operating = true;
+	               	that.targetDoorState.setValue(NewDoorState, undefined, 'fromGetValue');
+        	       	that.currentDoorState.setValue(NewDoorStateRun)
+			that.targetState = NewDoorState;
+			that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
 		};
-		that.showLog("Getting state END ");
+//		that.showLog("Getting state END ");
 	});
     	
 	if( this.topicOpenGet !== "" ) {
@@ -186,7 +173,7 @@ MqttGarageDoorAccessory.prototype = {
 
 	setState: function(status, callback, context) {
 		if(context !== 'fromGetValue') {
-		 	this.showLog("Setting state", status );
+//		 	this.showLog("Setting state", status );
     			if ( this.statusChanged(status) ) { 
         			this.operating = true; 
 				this.TimeOut = setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
@@ -197,9 +184,9 @@ MqttGarageDoorAccessory.prototype = {
 				if(status == DoorState.OPEN ) this.isOpen(true);
 				else this.isClosed(true);
 			}
-		}
+		};
 		callback();
-	 	this.showLog("Setting state END", status );
+//	 	this.showLog("Setting state END", status );
 	},
 
 	isClosed: function(status) {
@@ -227,7 +214,7 @@ MqttGarageDoorAccessory.prototype = {
 	},
 
 	setFinalDoorState: function() {
-	 	this.showLog("Setting Final", this.targetState);
+//	 	this.showLog("Setting Final", this.targetState);
 		if( this.operating ) {
 			if( this.targetState == DoorState.CLOSED ) {
 				if ( this.isClosed() ) {
@@ -253,7 +240,7 @@ MqttGarageDoorAccessory.prototype = {
     			}
     			this.operating = false;
 		}
-	 	this.showLog("Setting Final END", this.targetState);
+//	 	this.showLog("Setting Final END", this.targetState);
   	},
 
   	getTargetState: function(callback) {
