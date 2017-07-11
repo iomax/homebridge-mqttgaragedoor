@@ -13,6 +13,10 @@
 // 				"statusSet": 	"MQTT TOPIC FOR THE SETTING THE STATUS"
 // 				"openGet": 	"OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF OPEN SWITCH",
 // 				"closedGet": 	"OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF CLOSED SWITCH",
+//				"openStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK OPEN STATUS",
+//				"openStatusCmd": "OPTIONAL THE STATUS COMMAND ( DEFAULT "")",
+//				"closeStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK CLOSE STATUS",
+//				"closeStatusCmd": "OPTIONAL THE STATUS COMMAND (DEFAULT "")",
 // 				"openValue": 	"OPTIONAL VALUE THAT MEANS OPEN (DEFAULT true)"
 // 				"closedValue": 	"OPTIONAL VALUE THAT MEANS CLOSED (DEFAULT true)"
 // 			},
@@ -55,22 +59,29 @@ function MqttGarageDoorAccessory(log, config) {
 	};
 
 	this.caption		= config["caption"];
-	this.topicOpenGet	= ( config["topics"].openGet !== undefined ) ? config["topics"].openGet : "";
-	this.topicClosedGet	= ( config["topics"].closedGet !== undefined ) ? config["topics"].closedGet : "";
+	this.topicOpenGet	= config["topics"].openGet;
+	this.topicClosedGet	= config["topics"].closedGet;
 	this.topicStatusSet	= config["topics"].statusSet;
 	this.OpenValue		= ( config["topics"].openValue !== undefined ) ? config["topics"].openValue : "true";
 	this.ClosedValue	= ( config["topics"].closedValue !== undefined ) ? config["topics"].closedValue : "true";
+	this.openStatusCmdTopic	= config["topics"].openStatusCmdTopic; 
+	this.openStatusCmd	= ( config["topics"].openStatusCmd !== undefined ) ? config["topics"].openStatusCmd : "";
+	this.closeStatusCmdTopic	= config["topics"].closeStatusCmdTopic;
+	this.closeStatusCmd	= ( config["topics"].closeStatusCmd !== undefined ) ? config["topics"].closeStatusCmd : "";
 
 	this.doorRunInSeconds = config["doorRunInSeconds"]; 
 	this.pauseInSeconds = config["pauseInSeconds"]; 
+
+	this.Running = false;
+	this.Closed = true;
+	this.Open = !this.Closed;
 
 	this.garageDoorOpener = new Service.GarageDoorOpener(this.name);
 
 	this.currentDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.CurrentDoorState);
     	this.currentDoorState.on('get', this.getState.bind(this));
 	this.targetDoorState = this.garageDoorOpener.getCharacteristic(Characteristic.TargetDoorState);
-    	this.targetDoorState.on('set', this.setState.bind(this));
-    	this.targetDoorState.on('get', this.getTargetState.bind(this));
+    	this.targetDoorState.on('set', this.setTargetState.bind(this));
 
 
     	this.infoService = new Service.AccessoryInformation();
@@ -100,38 +111,35 @@ function MqttGarageDoorAccessory(log, config) {
 		var NewDoorState = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSED : DoorState.OPEN );
 		var NewDoorStateRun = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSING : DoorState.OPENING );
 
-//		that.showLog("Getting state");
+		that.showLog("Getting state");
 
-                if ( topicGotStatus ) {
-	               	that.targetDoorState.setValue(NewDoorState, undefined, 'fromGetValue');
-        	       	that.currentDoorState.setValue(NewDoorState)
-			that.targetState = NewDoorState;
-			if ( that.TimeOut !== undefined ) {
-				clearTimeout( that.TimeOut )
-				that.operating = false;
+		if ( NewDoorState !== that.currentDoorState.value) {
+                	if ( topicGotStatus ) {
+        	       		that.currentDoorState.setValue(NewDoorState)
+	               		that.targetDoorState.setValue(NewDoorState);
+				if ( that.TimeOut !== undefined ) {
+					clearTimeout( that.TimeOut );
+					that.Running = false;
+				};
+			} else if ( ! that.Running) {
+				if ( that.TimeOut !== undefined ) clearTimeout( that.TimeOut );
+        			that.Running = true; 
+                                that.targetDoorState.setValue( NewDoorState, undefined, 'fromGetValue' );
+            			that.currentDoorState.setValue( NewDoorStateRun );
+				that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
 			};
-		} else if ( ! that.operating) {
-	                that.operating = true;
-	               	that.targetDoorState.setValue(NewDoorState, undefined, 'fromGetValue');
-        	       	that.currentDoorState.setValue(NewDoorStateRun)
-			that.targetState = NewDoorState;
-			that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
-		};
-//		that.showLog("Getting state END ");
+		}
+		that.showLog("Getting state END ");
 	});
     	
-	if( this.topicOpenGet !== "" ) {
+	if( this.topicOpenGet !== undefined ) {
 		this.client.subscribe(this.topicOpenGet);
 	}
-	if( this.topicClosedGet !== "" ) {
+	if( this.topicClosedGet !== undefined ) {
 		this.client.subscribe(this.topicClosedGet);
 	}
 
-	this.operating = false;
-	this.Closed = true;
-	this.Open = false;
     	this.currentDoorState.setValue( DoorState.CLOSED );
-	this.targetState = DoorState.CLOSED
    	this.targetDoorState.setValue( DoorState.CLOSED );
 }
 
@@ -144,114 +152,117 @@ module.exports = function(homebridge) {
 }
 
 MqttGarageDoorAccessory.prototype = {
+	
+	doorStatusReadable : function( doorState ) {
+		switch (doorState) {
+		case DoorState.OPEN:
+			return "OPEN";
+		case DoorState.OPENING:
+			return "OPENING";
+		case DoorState.CLOSING:
+			return "CLOSING";
+		case DoorState.CLOSED:
+			return "CLOSED";
+		case DoorState.STOPPED:
+			return "STOPPED";
+		}
+	},
 
 	showLog: function( msg, status ) {
-		var ll = "";
+		return;
                 if ( msg !== undefined)  this.log( msg );
-                if( status !== undefined) this.log("Status : " + (status == DoorState.OPEN ? "OPEN" : "CLOSED") );
-		this.log(" isClosed : " + ( this.isClosed() ? "CLOSED" : "OPEN") );
-		this.log(" isOpen : " + ( this.isOpen() ? "OPEN" : "CLOSED") );
-	 	this.log(" targetState : " + ( this.targetState == DoorState.OPEN ? "OPEN" : "CLOSED") );
-		this.log(" Operating : " + this.operating );
-		if( status !== undefined) this.log(" statusChanged : " + this.statusChanged(status) );
+                if( status !== undefined) this.log("Status : " + this.doorStatusReadable(status));
+		this.log(" isClosed : " + this.isClosed() + " / " + this.Closed );
+		this.log(" isOpen : " + this.isOpen() + " / " + this.Open );
+		this.log(" currentState (HK) : " + this.doorStatusReadable(this.currentDoorState.value) ); 
+	 	this.log(" targetState (HK) : " + this.doorStatusReadable(this.targetDoorState.value) );
+		this.log(" Running : " + this.Running );
 	},
 
-	getState: function(callback) {
-    		var isClosed = this.isClosed();
-    		this.log("GarageDoor is " + (isClosed ? "CLOSED ("+DoorState.CLOSED+")" : "OPEN ("+DoorState.OPEN+")")); 
-    		callback(null, (isClosed ? DoorState.CLOSED : DoorState.OPEN));
-	},
 
 	autoClose : function() {
-                this.operating = true;
+                this.Running = true;
               	this.targetDoorState.setValue(DoorState.CLOSED, undefined, 'fromGetValue');
                	this.currentDoorState.setValue(DoorState.CLOSING);
-		this.targetState = DoorState.CLOSED;
 		this.isClosed(true);
 		this.TimeOut = setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
 	},
 
-	setState: function(status, callback, context) {
+	setTargetState: function(status, callback, context) {
+	 	this.showLog("Setting Target :", status);
+		this.isOpen( ( status == DoorState.OPEN ? true : false) );
+		this.isClosed( (status == DoorState.CLOSED ? true : false ) );
 		if(context !== 'fromGetValue') {
-//		 	this.showLog("Setting state", status );
-    			if ( this.statusChanged(status) ) { 
-        			this.operating = true; 
+			if( status != this.currentDoorState.value ) {
+                        	if ( this.Running ) clearTimeout( this.TimeOut );
+        			this.Running = true; 
 				this.TimeOut = setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
 	        		this.log("Triggering GarageDoor Command");
 				this.client.publish(this.topicStatusSet, "on");
-				this.targetState = status;
             			this.currentDoorState.setValue( (status == DoorState.OPEN ?  DoorState.OPENING : DoorState.CLOSING ) );
-				if(status == DoorState.OPEN ) this.isOpen(true);
-				else this.isClosed(true);
 			}
 		};
+	 	this.showLog("Setting Target END:", status);
 		callback();
-//	 	this.showLog("Setting state END", status );
 	},
 
 	isClosed: function(status) {
 		if( status !== undefined ) {
-			if( this.topicClosedGet == "" )  this.Closed = status;
-                	if( this.topicOpenGet == "" ) this.Open = ! this.Closed;
+			if( this.topicClosedGet == undefined ) {
+ 				this.Closed = status;
+                		if( this.topicOpenGet == undefined ) this.Open = ! this.Closed;
+			};
 		};
-		if( this.topicClosedGet !== "" ) return( this.Closed )
+		if( this.topicClosedGet !== undefined ) return( this.Closed )
 		else return( !this.Open );
  	},
 
 	isOpen: function(status) {
 		if( status !== undefined ) {
-                	if( this.topicOpenGet == "" ) this.Open = status;
-			if( this.topicClosedGet == "" ) this.Closed = ! this.Open;
+                	if( this.topicOpenGet == undefined ) {
+				this.Open = status;
+				if( this.topicClosedGet == undefined ) this.Closed = ! this.Open;
+			};
 		};
-		if( this.topicOpenGet !== "" ) return( this.Open )
+		if( this.topicOpenGet !== undefined ) return( this.Open )
 		else return( !this.Closed );
  	},
 
-	statusChanged: function( status ) {
-    		if ((status == DoorState.OPEN && this.isClosed()) || (status == DoorState.CLOSED && this.isOpen() )) {
-			return( true );
-		} else return( false );
-	},
-
 	setFinalDoorState: function() {
-//	 	this.showLog("Setting Final", this.targetState);
-		if( this.operating ) {
-			if( this.targetState == DoorState.CLOSED ) {
+	 	this.showLog("Setting Final", this.targetDoorState.value);
+		if( this.Running ) {
+			if( this.targetDoorState.value == DoorState.CLOSED ) {
 				if ( this.isClosed() ) {
 	                        	this.currentDoorState.setValue( DoorState.CLOSED);
-					if (this.topicClosedGet !== "") this.isOpen(false);
 				} else {
-                                       	this.currentDoorState.setValue( DoorState.OPEN );
-					this.targetState = DoorState.OPEN;
+                                      	this.currentDoorState.setValue( DoorState.OPEN );
                                         this.targetDoorState.setValue( DoorState.OPEN, undefined, 'fromGetValue' );
 				};
-			} else if( this.targetState == DoorState.OPEN ) {
+			} else if( this.targetDoorState.value == DoorState.OPEN ) {
                         	if ( this.isOpen() ) {
                                		this.currentDoorState.setValue( DoorState.OPEN);
-                                	if (this.topicOpenGet !== "") this.isOpen(true);
 					if ( this.pauseInSeconds !== undefined ) {
 						this.TimeOut = setTimeout(this.autoClose.bind(this), this.pauseInSeconds * 1000);
 					};
 				} else {
                                         this.currentDoorState.setValue( DoorState.CLOSED );
-					this.targetState = DoorState.CLOSE;
                                         this.targetDoorState.setValue( DoorState.CLOSED, undefined, 'fromGetValue' );
 				};
     			}
-    			this.operating = false;
+    			this.Running = false;
 		}
-//	 	this.showLog("Setting Final END", this.targetState);
+	 	this.showLog("Setting Final END", this.targetDoorState.value);
   	},
 
-  	getTargetState: function(callback) {
-    		callback(null, this.targetState);
-  	},
+	getState: function(callback) {
+//    		this.log("GarageDoor is " + this.currentState );
+		if( this.openStatusCmdTopic !== undefined ) this.client.publish(this.openStatusCmdiTopic, this.openStatusCmd); 
+		if( this.closeStatusCmdTopic !== undefined ) this.client.publish(this.closeStatusCmdTopic, this.closeStatusCmd); 
+    		callback(null, this.currentDoorState.value);
+	},
 
 	getServices:  function() {
 		return [this.infoService, this.garageDoorOpener];
 	},
-
-
-
 };
 

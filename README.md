@@ -3,9 +3,12 @@ An homebridge plugin that create an HomeKit Garage Door Opener accessory mapped 
 
 # Installation
 Follow the instruction in [homebridge](https://www.npmjs.com/package/homebridge) for the homebridge server installation.
-    
+The plugin must be cloned locally (git clone https://github.com/iomax/homebridge-mqttgaragedoor.git ) and should be installed "globally" by typing:
+
+    npm install -g ./homebridge-mqttgaragedoor
+   
 # Release notes
-Version 1.0.0
+Version 1.0.1
 + Initial draft
 
 # Configuration
