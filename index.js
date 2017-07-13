@@ -112,6 +112,7 @@ function MqttGarageDoorAccessory(log, config) {
 		var NewDoorStateRun = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSING : DoorState.OPENING );
 
 		that.showLog("Getting state");
+		that.log("Getting state " +that.doorStateReadable(NewDoorState));
 
 		if ( NewDoorState !== that.currentDoorState.value) {
                 	if ( topicGotStatus ) {
@@ -153,7 +154,7 @@ module.exports = function(homebridge) {
 
 MqttGarageDoorAccessory.prototype = {
 	
-	doorStatusReadable : function( doorState ) {
+	doorStateReadable : function( doorState ) {
 		switch (doorState) {
 		case DoorState.OPEN:
 			return "OPEN";
@@ -171,11 +172,11 @@ MqttGarageDoorAccessory.prototype = {
 	showLog: function( msg, status ) {
 		return;
                 if ( msg !== undefined)  this.log( msg );
-                if( status !== undefined) this.log("Status : " + this.doorStatusReadable(status));
+                if( status !== undefined) this.log("Status : " + this.doorStateReadable(status));
 		this.log(" isClosed : " + this.isClosed() + " / " + this.Closed );
 		this.log(" isOpen : " + this.isOpen() + " / " + this.Open );
-		this.log(" currentState (HK) : " + this.doorStatusReadable(this.currentDoorState.value) ); 
-	 	this.log(" targetState (HK) : " + this.doorStatusReadable(this.targetDoorState.value) );
+		this.log(" currentState (HK) : " + this.doorStateReadable(this.currentDoorState.value) ); 
+	 	this.log(" targetState (HK) : " + this.doorStateReadable(this.targetDoorState.value) );
 		this.log(" Running : " + this.Running );
 	},
 
@@ -252,10 +253,11 @@ MqttGarageDoorAccessory.prototype = {
     			this.Running = false;
 		}
 	 	this.showLog("Setting Final END", this.targetDoorState.value);
+    		this.log("Final State is " + this.doorStateReadable(this.currentDoorState.value) );
   	},
 
 	getState: function(callback) {
-//    		this.log("GarageDoor is " + this.currentState );
+    		this.log("Garage Door is " + this.doorStateReadable(this.currentDoorState.value) );
 		if( this.openStatusCmdTopic !== undefined ) this.client.publish(this.openStatusCmdiTopic, this.openStatusCmd); 
 		if( this.closeStatusCmdTopic !== undefined ) this.client.publish(this.closeStatusCmdTopic, this.closeStatusCmd); 
     		callback(null, this.currentDoorState.value);
@@ -265,4 +267,3 @@ MqttGarageDoorAccessory.prototype = {
 		return [this.infoService, this.garageDoorOpener];
 	},
 };
-
