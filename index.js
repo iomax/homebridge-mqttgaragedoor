@@ -112,7 +112,7 @@ function MqttGarageDoorAccessory(log, config) {
 		var NewDoorStateRun = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSING : DoorState.OPENING );
 
 		that.showLog("Getting state");
-		that.log("Getting state " +that.doorStateReadable(NewDoorState));
+		that.log("Getting state " +that.doorStateReadable(NewDoorState) + " its was " + that.doorStateReadable(that.currentDoorState.value));
 
 		if ( NewDoorState !== that.currentDoorState.value) {
                 	if ( topicGotStatus ) {
