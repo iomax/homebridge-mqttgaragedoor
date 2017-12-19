@@ -111,10 +111,10 @@ function MqttGarageDoorAccessory(log, config) {
 		var NewDoorState = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSED : DoorState.OPEN );
 		var NewDoorStateRun = ( ( (topic == that.topicClosedGet) == topicGotStatus ) ? DoorState.CLOSING : DoorState.OPENING );
 
-		that.showLog("Getting state");
-		that.log("Getting state " +that.doorStateReadable(NewDoorState) + " its was " + that.doorStateReadable(that.currentDoorState.value));
 
-		if ( NewDoorState !== that.currentDoorState.value) {
+		if (( (! that.Running) && NewDoorState !== that.currentDoorState.value ) || ( that.Running && NewDoorStateRun !== that.currentDoorState.value ) ) {
+			that.showLog("Getting state");
+ 		        that.log("Getting state " +that.doorStateReadable(NewDoorState) + " its was " + that.doorStateReadable(that.currentDoorState.value) + " [TOPIC : " + topic + " ]");
                 	if ( topicGotStatus ) {
         	       		that.currentDoorState.setValue(NewDoorState)
 	               		that.targetDoorState.setValue(NewDoorState);
@@ -122,6 +122,8 @@ function MqttGarageDoorAccessory(log, config) {
 					clearTimeout( that.TimeOut );
 					that.Running = false;
 				};
+		 		that.showLog("Setting Final END", that.targetDoorState.value);
+    				that.log("Final State is " + that.doorStateReadable(that.currentDoorState.value) );
 			} else if ( ! that.Running) {
 				if ( that.TimeOut !== undefined ) clearTimeout( that.TimeOut );
         			that.Running = true; 
@@ -129,8 +131,8 @@ function MqttGarageDoorAccessory(log, config) {
             			that.currentDoorState.setValue( NewDoorStateRun );
 				that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
 			};
-		}
-		that.showLog("Getting state END ");
+			that.showLog("Getting state END ");
+		};
 	});
     	
 	if( this.topicOpenGet !== undefined ) {
