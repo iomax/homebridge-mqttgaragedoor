@@ -37,6 +37,8 @@ var mqtt = require("mqtt");
 function MqttGarageDoorAccessory(log, config) {
   	this.log          	= log;
   	this.name 		= config["name"];
+  	this.json_path		= config["json_path"];
+  	this.send_command	=  config["send_command"];
   	this.url 		= config["url"];
 	this.client_Id 		= 'mqttjs_' + Math.random().toString(16).substr(2, 8);
 	this.options = {
@@ -63,6 +65,7 @@ function MqttGarageDoorAccessory(log, config) {
 	this.topicClosedGet	= config["topics"].closedGet;
 	this.topicStatusSet	= config["topics"].statusSet;
 	this.OpenValue		= ( config["topics"].openValue !== undefined ) ? config["topics"].openValue : "true";
+	this.send_command	= ( config["send_command"] !== undefined ) ? config["send_command"] : "on";
 	this.ClosedValue	= ( config["topics"].closedValue !== undefined ) ? config["topics"].closedValue : "true";
 	this.openStatusCmdTopic	= config["topics"].openStatusCmdTopic; 
 	this.openStatusCmd	= ( config["topics"].openStatusCmd !== undefined ) ? config["topics"].openStatusCmd : "";
@@ -100,6 +103,15 @@ function MqttGarageDoorAccessory(log, config) {
 
 	this.client.on('message', function (topic, message) {
 		var status = message.toString();
+		that.log('json_pathmessage is: ' + status);
+                if (that.json_path !== undefined){
+			that.log('json_path defined. Parsing json message');
+			that.log('message is: ' + status);
+                        var json_status = JSON.parse(status);
+			status = json_status[that.json_path];
+			that.log('json_path: value is ' + status);
+
+		}
 		
 		if (topic == that.topicClosedGet) {
 			var topicGotStatus = (status == that.ClosedValue);
@@ -201,7 +213,7 @@ MqttGarageDoorAccessory.prototype = {
         			this.Running = true; 
 				this.TimeOut = setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
 	        		this.log("Triggering GarageDoor Command");
-				this.client.publish(this.topicStatusSet, "on");
+				this.client.publish(this.topicStatusSet, this.send_command);
             			this.currentDoorState.setValue( (status == DoorState.OPEN ?  DoorState.OPENING : DoorState.CLOSING ) );
 			}
 		};
