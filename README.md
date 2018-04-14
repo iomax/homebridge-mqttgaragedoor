@@ -24,9 +24,13 @@ Remember to configure the plugin in config.json in your home directory inside th
   "topics": {
 		"statusSet":    "MQTT TOPIC FOR THE SETTING THE STATUS"
 		"openGet":      "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF OPEN SWITCH",
-		"closedGet":    "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF CLOSED SWITCH",
 		"openValue":    "OPTIONAL VALUE THAT MEANS OPEN (DEFAULT true)"
+		"closedGet":    "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF CLOSED SWITCH",
 		"closedValue":  "OPTIONAL VALUE THAT MEANS CLOSED (DEFAULT true)"
+		"openStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK OPEN STATUS",
+		"openStatusCmd": "OPTIONAL THE STATUS COMMAND ( DEFAULT "")",
+		"closeStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK CLOSE STATUS",
+		"closeStatusCmd": "OPTIONAL THE STATUS COMMAND (DEFAULT "")"
             }
   "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS",
   "pauseInSeconds" : "IF DEFINED : AUTO CLOSE AFTER [Seconds]"
