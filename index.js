@@ -108,26 +108,13 @@ function MqttGarageDoorAccessory(log, config) {
 	});
 	this.client.on('connect', function () {
 		that.log('GARAGE: Subscribing to topics');
-// 		if( this.topicOpenGet !== undefined ) {
-// 			this.log("GARAGE: Subscribing to topic:" + this.topicOpenGet);
-// 			this.client.subscribe(this.topicOpenGet);
-// 		}
-// 		if( this.topicClosedGet !== undefined ) {
-// 			this.log("GARAGE: Subscribing to topic:" + this.topicClosedGet);
-// 			this.client.subscribe(this.topicClosedGet);
-// 		}
 	});
 
 	this.client.on('message', function (topic, message) {
 		var status = message.toString();
-		that.log('GARAGE json_pathmessage is: ' + status);
                 if (that.json_path !== undefined){
-			that.log('GARAGE json_path defined. Parsing json message');
-			that.log('GARAGE message is: ' + status);
                         var json_status = JSON.parse(status);
 			status = json_status[that.json_path];
-			that.log('GARAGE json_path: value is ' + status);
-
 		}
 		
 		if (topic == that.topicClosedGet) {
