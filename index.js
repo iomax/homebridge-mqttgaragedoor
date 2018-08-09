@@ -37,6 +37,8 @@ var mqtt = require("mqtt");
 function MqttGarageDoorAccessory(log, config) {
   	this.log          	= log;
   	this.name 		= config["name"];
+  	this.json_path		= config["json_path"];
+  	this.send_command	=  config["send_command"];
   	this.url 		= config["url"];
 	this.client_Id 		= 'mqttjs_' + Math.random().toString(16).substr(2, 8);
 	this.options = {
@@ -45,7 +47,7 @@ function MqttGarageDoorAccessory(log, config) {
 	    	protocolId: 'MQTT',
     		protocolVersion: 4,
     		clean: true,
-    		reconnectPeriod: 1000,
+    		reconnectPeriod: 30 * 1000,
     		connectTimeout: 30 * 1000,
 		will: {
 			topic: 'WillMsg',
@@ -63,6 +65,7 @@ function MqttGarageDoorAccessory(log, config) {
 	this.topicClosedGet	= config["topics"].closedGet;
 	this.topicStatusSet	= config["topics"].statusSet;
 	this.OpenValue		= ( config["topics"].openValue !== undefined ) ? config["topics"].openValue : "true";
+	this.send_command	= ( config["send_command"] !== undefined ) ? config["send_command"] : "on";
 	this.ClosedValue	= ( config["topics"].closedValue !== undefined ) ? config["topics"].closedValue : "true";
 	this.openStatusCmdTopic	= config["topics"].openStatusCmdTopic; 
 	this.openStatusCmd	= ( config["topics"].openStatusCmd !== undefined ) ? config["topics"].openStatusCmd : "";
@@ -94,12 +97,25 @@ function MqttGarageDoorAccessory(log, config) {
 	// connect to MQTT broker
 	this.client = mqtt.connect(this.url, this.options);
 	var that = this;
+	this.client.on('offline', function () {
+		that.log('GARAGE ERROR: Mqtt Client offline');
+	});
+	this.client.on('reconnect', function () {
+		that.log('GARAGE ERROR: Mqtt Client reconnecting...');
+	});
 	this.client.on('error', function () {
-		that.log('Error event on MQTT');
+		that.log('GARAGE Error event on MQTT');
+	});
+	this.client.on('connect', function () {
+		that.log('GARAGE: Subscribing to topics');
 	});
 
 	this.client.on('message', function (topic, message) {
 		var status = message.toString();
+                if (that.json_path !== undefined){
+                        var json_status = JSON.parse(status);
+			status = json_status[that.json_path];
+		}
 		
 		if (topic == that.topicClosedGet) {
 			var topicGotStatus = (status == that.ClosedValue);
@@ -113,8 +129,8 @@ function MqttGarageDoorAccessory(log, config) {
 
 
 		if (( (! that.Running) && NewDoorState !== that.currentDoorState.value ) || ( that.Running && NewDoorStateRun !== that.currentDoorState.value ) ) {
-			that.showLog("Getting state");
- 		        that.log("Getting state " +that.doorStateReadable(NewDoorState) + " its was " + that.doorStateReadable(that.currentDoorState.value) + " [TOPIC : " + topic + " ]");
+			that.showLog("GARAGE GARAGE Getting state");
+ 		        that.log("GARAGE Getting state " +that.doorStateReadable(NewDoorState) + " its was " + that.doorStateReadable(that.currentDoorState.value) + " [TOPIC : " + topic + " ]");
                 	if ( topicGotStatus ) {
         	       		that.currentDoorState.setValue(NewDoorState)
 	               		that.targetDoorState.setValue(NewDoorState);
@@ -122,8 +138,8 @@ function MqttGarageDoorAccessory(log, config) {
 					clearTimeout( that.TimeOut );
 					that.Running = false;
 				};
-		 		that.showLog("Setting Final END", that.targetDoorState.value);
-    				that.log("Final State is " + that.doorStateReadable(that.currentDoorState.value) );
+		 		that.showLog("GARAGE Setting Final END", that.targetDoorState.value);
+    				that.log("GARAGE Final State is " + that.doorStateReadable(that.currentDoorState.value) );
 			} else if ( ! that.Running) {
 				if ( that.TimeOut !== undefined ) clearTimeout( that.TimeOut );
         			that.Running = true; 
@@ -131,14 +147,16 @@ function MqttGarageDoorAccessory(log, config) {
             			that.currentDoorState.setValue( NewDoorStateRun );
 				that.TimeOut = setTimeout(that.setFinalDoorState.bind(that), that.doorRunInSeconds * 1000);
 			};
-			that.showLog("Getting state END ");
+			that.showLog("GARAGE Getting state END ");
 		};
 	});
     	
 	if( this.topicOpenGet !== undefined ) {
+		this.log("GARAGE: Subscribing to topic:" + this.topicOpenGet);
 		this.client.subscribe(this.topicOpenGet);
 	}
 	if( this.topicClosedGet !== undefined ) {
+		this.log("GARAGE: Subscribing to topic:" + this.topicClosedGet);
 		this.client.subscribe(this.topicClosedGet);
 	}
 
@@ -201,7 +219,7 @@ MqttGarageDoorAccessory.prototype = {
         			this.Running = true; 
 				this.TimeOut = setTimeout(this.setFinalDoorState.bind(this), this.doorRunInSeconds * 1000);
 	        		this.log("Triggering GarageDoor Command");
-				this.client.publish(this.topicStatusSet, "on");
+				this.client.publish(this.topicStatusSet, this.send_command);
             			this.currentDoorState.setValue( (status == DoorState.OPEN ?  DoorState.OPENING : DoorState.CLOSING ) );
 			}
 		};
