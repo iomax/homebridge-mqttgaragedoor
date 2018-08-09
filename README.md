@@ -18,6 +18,8 @@ Remember to configure the plugin in config.json in your home directory inside th
   "accessory": "mqttgaragedoor",
   "name": "SWITCH NAME",
   "url": "URL OF THE BROKER",
+  "send_command": "OPTIONAL SET THE COMMAND TO SEND TO TOPIC EXAMPLE: garage_click",
+  "json_path": "OPTIONAL IF MQTT MESSAGE NEEDS JSON PARSING USE THIS OPTION TO SET JSON PATH EXAMPLE: some_path",
   "username": "USERNAME OF THE BROKER",
   "password": "PASSWORD OF THE BROKER",
   "caption": "SWITCH LABEL",
@@ -38,5 +40,4 @@ Remember to configure the plugin in config.json in your home directory inside th
 The original homebridge MQTT plugins work was done by [ilcato](https://github.com/ilcato) in his [homebridge-mqttswitch](https://github.com/ilcato/homebridge-mqttswitch) project.
 
 The original homebridge GarageDoor plugin work was done by [belamonica] (https://github.com/benlamonica) in his [homebridge-rasppi-gpio-garagedoor] (https://github.com/benlamonica/homebridge-rasppi-gpio-garagedoor) project.
-
-
+JSON support in mqtt message was added by [MrBalonio] (https://github.com/mrbalonio)
