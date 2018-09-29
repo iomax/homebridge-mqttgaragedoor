@@ -8,8 +8,7 @@ The plugin must be cloned locally (git clone https://github.com/iomax/homebridge
     npm install -g ./homebridge-mqttgaragedoor
    
 # Release notes
-Version 1.0.1
-+ Initial draft
+Version 1.0.2
 
 # Configuration
 Remember to configure the plugin in config.json in your home directory inside the .homebridge directory. Configuration parameters:
@@ -32,7 +31,7 @@ Remember to configure the plugin in config.json in your home directory inside th
 		"closeStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK CLOSE STATUS",
 		"closeStatusCmd": "OPTIONAL THE STATUS COMMAND (DEFAULT "")"
             }
-  "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS",
+  "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS (DEFAULT 20 )",
   "pauseInSeconds" : "IF DEFINED : AUTO CLOSE AFTER [Seconds]"
 }
 ```
