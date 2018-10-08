@@ -15,23 +15,25 @@ Remember to configure the plugin in config.json in your home directory inside th
 ```javascript
 {
   "accessory": "mqttgaragedoor",
-  "name": "SWITCH NAME",
+  "name": "NAME OF THE GARAGE DOOR OPENER",
   "url": "URL OF THE BROKER",
   "username": "USERNAME OF THE BROKER",
-  "password": "PASSWORD OF THE BROKER",
-  "caption": "SWITCH LABEL",
+  "password": "PASSWORD OF THE BROKER"
+  "caption": "LABEL OF THE GARAGE DOOR OPENER",
+  "lwt": "OPTIONAL: DOOR OPENER MQTT LAST WILL AND TESTAMENT TOPIC",
+  "lwtPayload": "lwt Payload",
   "topics": {
-		"statusSet":    "MQTT TOPIC FOR THE SETTING THE STATUS"
-		"openGet":      "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF OPEN SWITCH",
-		"openValue":    "OPTIONAL VALUE THAT MEANS OPEN (DEFAULT true)"
-		"closedGet":    "OPTIONAL MQTT TOPIC FOR THE GETTING THE STATUS OF CLOSED SWITCH",
-		"closedValue":  "OPTIONAL VALUE THAT MEANS CLOSED (DEFAULT true)"
-		"openStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK OPEN STATUS",
-		"openStatusCmd": "OPTIONAL THE STATUS COMMAND ( DEFAULT "")",
-		"closeStatusCmdTopic": "OPTIONAL MQTT TOPIC TO ASK CLOSE STATUS",
-		"closeStatusCmd": "OPTIONAL THE STATUS COMMAND (DEFAULT "")"
-            }
-  "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS (DEFAULT 20 )",
+                "statusSet":    "MQTT TOPIC TO SET THE DOOR OPENER"
+                "openGet":      "OPTIONAL: MQTT TOPIC TO GET THE DOOR OPEN STATUS",
+                "openValue":    "OPTIONAL VALUE THAT MEANS OPEN (DEFAULT true)"
+                "closedGet":    "OPTIONAL: MQTT TOPIC TO GET THE DOOR CLOSED STATUS",
+                "closedValue":  "OPTIONAL VALUE THAT MEANS CLOSED (DEFAULT true)"
+                "openStatusCmdTopic": "OPTIONAL: MQTT TOPIC TO ASK ABOUT THE OPEN STATUS",
+                "openStatusCmd": "OPTIONAL: THE OPEN STATUS COMMAND ( DEFAULT "")",
+                "closeStatusCmdTopic": "OPTIONAL: MQTT TOPIC TO ASK ABOUT THE CLOSED STATUS",
+                "closeStatusCmd": "OPTIONAL THE CLOSED STATUS COMMAND (DEFAULT "")",
+            },
+  "doorRunInSeconds": "OPEN/CLOSE RUN TIME IN SECONDS (DEFAULT 20"),
   "pauseInSeconds" : "IF DEFINED : AUTO CLOSE AFTER [Seconds]"
 }
 ```
