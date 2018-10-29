@@ -120,7 +120,7 @@ function MqttGarageDoorAccessory(log, config) {
 	this.ObstructionDetected = this.garageDoorOpener.getCharacteristic(Characteristic.ObstructionDetected);
 	this.ObstructionDetected.on('get', this.checkReachable.bind(this));
 
-	if (this.lwt !== undefined ) this.reachable = false
+	if (this.lwt !== "") this.reachable = false
 	else this.reachable = true;  
 
     	this.infoService = new Service.AccessoryInformation();
