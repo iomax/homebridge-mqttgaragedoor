@@ -202,7 +202,8 @@ module.exports = function(homebridge) {
   	Characteristic = homebridge.hap.Characteristic;
 	DoorState = homebridge.hap.Characteristic.CurrentDoorState;
 
-  	homebridge.registerAccessory("homebridge-mqttgaragedoor", "mqttgaragedoor", MqttGarageDoorAccessory);
+  	homebridge.registerAccessory("homebridge-mqttgaragedoor-dev", "mqttgaragedoor-dev", MqttGarageDoorAccessory);
+//  	homebridge.registerAccessory("homebridge-mqttgaragedoor", "mqttgaragedoor", MqttGarageDoorAccessory);
 }
 
 MqttGarageDoorAccessory.prototype = {
