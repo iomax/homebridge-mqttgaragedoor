@@ -120,7 +120,7 @@ function MqttGarageDoorAccessory(log, config) {
 	this.ObstructionDetected = this.garageDoorOpener.getCharacteristic(Characteristic.ObstructionDetected);
 	this.ObstructionDetected.on('get', this.checkReachable.bind(this));
 
-	if (this.lwt !== "") this.reachable = false
+	if (this.lwt !== undefined ) this.reachable = false
 	else this.reachable = true;  
 
     	this.infoService = new Service.AccessoryInformation();
@@ -202,8 +202,7 @@ module.exports = function(homebridge) {
   	Characteristic = homebridge.hap.Characteristic;
 	DoorState = homebridge.hap.Characteristic.CurrentDoorState;
 
-  	homebridge.registerAccessory("homebridge-mqttgaragedoor-dev", "mqttgaragedoor-dev", MqttGarageDoorAccessory);
-//  	homebridge.registerAccessory("homebridge-mqttgaragedoor", "mqttgaragedoor", MqttGarageDoorAccessory);
+  	homebridge.registerAccessory("homebridge-mqttgaragedoor", "mqttgaragedoor", MqttGarageDoorAccessory);
 }
 
 MqttGarageDoorAccessory.prototype = {
