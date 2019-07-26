@@ -155,6 +155,13 @@ function MqttGarageDoorAccessory(log, config) {
 				that.reachable = false;
 			// Trick to force "Not Responding" state
 				that.garageDoorOpener.removeCharacteristic(that.StatusFault);
+			} else {
+ 				if(!that.reachable) {
+                                	that.reachable = true;
+                        // Trick to force the clear of the "Not Responding" state
+                                that.garageDoorOpener.addOptionalCharacteristic(Characteristic.StatusFault);
+                                that.StatusFault = that.garageDoorOpener.getCharacteristic(Characteristic.StatusFault);
+                        	};
 			}
 		} else {
 			if(!that.reachable) {
@@ -314,7 +321,8 @@ MqttGarageDoorAccessory.prototype = {
 		if( this.closeStatusCmdTopic !== undefined ) this.client.publish(this.closeStatusCmdTopic, this.closeStatusCmd);
 		if( this.reachable) {
     			this.log("Garage Door is " + this.doorStateReadable(this.currentDoorState.value) );
-			callback();
+                	callback(null, this.currentDoorState.value);
+//			callback();
 		} else {
 			this.log("Offline");
 			callback(1);
