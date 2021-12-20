@@ -94,6 +94,8 @@ function MqttGarageDoorAccessory(log, config) {
 		this.lwt_payload = config["lwtPayload"];
  	};
 
+        this.warn_2_offline = true;
+
 	this.doorRunInSeconds 	= (config["doorRunInSeconds"] !== undefined ? config["doorRunInSeconds"] : 20 ); 
 	if( !( this.topicOpenGet !== undefined && this.topicClosedGet !== undefined ) ) this.pauseInSeconds = config["pauseInSeconds"]; 
 
@@ -322,9 +324,13 @@ MqttGarageDoorAccessory.prototype = {
 		if( this.reachable) {
     			this.log("Garage Door is " + this.doorStateReadable(this.currentDoorState.value) );
                 	callback(null, this.currentDoorState.value);
+                        this.warn_2_offline = true;
 //			callback();
 		} else {
-			this.log("Offline");
+                        if( this.warn_2_offline ) {
+                                this.log("Offline");
+                                this.warn_2_offline = false;
+                        };
 			callback(1);
 		}
 	},
